@@ -6,7 +6,7 @@ FROM base AS deps
 WORKDIR /app
 
 # Install dependencies using npm
-COPY package.json package-lock.json* ./
+COPY package.json ./
 RUN npm install
 
 # 2. Rebuild the source code only when needed
