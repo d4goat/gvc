@@ -60,13 +60,13 @@
   --spacing-margin-mobile: 20px;
   --spacing-unit: 8px;
 
-  --font-headline-lg: "Atkinson Hyperlegible Next", sans-serif;
-  --font-headline-lg-mobile: "Atkinson Hyperlegible Next", sans-serif;
-  --font-callout: "Public Sans", sans-serif;
-  --font-headline-md: "Atkinson Hyperlegible Next", sans-serif;
-  --font-body-md: "Public Sans", sans-serif;
-  --font-label-lg: "Public Sans", sans-serif;
-  --font-body-lg: "Public Sans", sans-serif;
+  --font-headline-lg: "Geist", sans-serif;
+  --font-headline-lg-mobile: "Geist", sans-serif;
+  --font-callout: "Geist", sans-serif;
+  --font-headline-md: "Geist", sans-serif;
+  --font-body-md: "Geist", sans-serif;
+  --font-label-lg: "Geist", sans-serif;
+  --font-body-lg: "Geist", sans-serif;
 
   --text-headline-lg: 32px;
   --text-headline-lg--line-height: 1.2;

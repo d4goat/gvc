@@ -4,7 +4,7 @@ import {motion} from 'framer-motion'
 import { CURVE_EASE } from "../libs/utils";
 import Link from "next/link";
 
-export default function Header() {
+export default function Header({appState}: {appState: string}) {
   const [active, setActive] = useState<string>("beranda")
   const router = useRouter()
   const pathname = usePathname()
@@ -26,7 +26,10 @@ export default function Header() {
 
       // If user is near the very bottom, always activate last section
       if (docHeight - scrollBottom < 80) {
-        setActive(navItem[navItem.length - 1].title)
+        const lastId = getIdFromLink(navItem[navItem.length - 1].link)
+        if (document.getElementById(lastId)) {
+          setActive(navItem[navItem.length - 1].title)
+        }
         return
       }
 
@@ -62,6 +65,12 @@ export default function Header() {
   const dispatchHomeEvent = () => {
     window.dispatchEvent(new CustomEvent('pahamburo:navigate-home'));
   };
+
+  useEffect(() => {
+    if(appState !== 'idle'){
+      setActive('')
+    }
+  }, [appState])
 
   return (
     <header className="bg-surface border-b border-surface-container fixed top-0 w-full z-50">

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Bot, User, HelpCircle, ArrowLeft, Trash2 } from 'lucide-react'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion'
+import { useLenis } from '../hooks/useLenis'
 interface Message {
   role: 'user' | 'assistant'
   content: string
@@ -14,8 +15,8 @@ interface Message {
 
 const FAQ_LIST = [
   {
-    question: "Apa itu PahamBirokrasi?",
-    answer: "PahamBirokrasi adalah alat bantu berbasis kecerdasan buatan (AI) untuk menyederhanakan bahasa dokumen birokrasi, hukum, dan surat resmi pemerintah yang rumit ke dalam bahasa sehari-hari yang mudah dipahami."
+    question: "Apa itu Pakra?",
+    answer: "Pakra adalah alat bantu berbasis kecerdasan buatan (AI) untuk menyederhanakan bahasa dokumen birokrasi, hukum, dan surat resmi pemerintah yang rumit ke dalam bahasa sehari-hari yang mudah dipahami."
   },
   {
     question: "Bagaimana cara kerja penyederhanaan?",
@@ -46,12 +47,30 @@ const Page = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const lenis = useLenis()
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const container = chatContainerRef.current
+
+    if(!container) return
+    container.scrollTo({top: container.scrollHeight, behavior: 'smooth'})
   }, [messages, isLoading])
+
+  useEffect(() => {
+    const container = chatContainerRef.current
+    if(!container)return
+
+    const handleWheel = (e: WheelEvent) => {
+      e.stopPropagation()
+    }
+
+    container.addEventListener('wheel', handleWheel, { passive: true })
+    return () => container.removeEventListener('wheel', handleWheel)
+  })
+
 
   const handleSend = async (textToSend: string) => {
     if (!textToSend.trim()) return
@@ -98,10 +117,10 @@ const Page = () => {
         <div className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8">
           
           {/* Back Button */}
-          <div className="mb-6">
+          <div className="mb-10">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary font-label-lg text-label-lg transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 shadow-md p-3 rounded-md bg-white text-primary hover:bg-primary hover:text-white font-label-lg text-label-lg transition-colors duration-300 cursor-pointer"
             >
               <ArrowLeft size={16} />
               Kembali ke Beranda
@@ -113,7 +132,7 @@ const Page = () => {
               Pusat Bantuan & Layanan Tanya Jawab
             </h1>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-3xl">
-              Kami siap membantu Anda memahami cara menggunakan PahamBirokrasi. Silakan cari jawaban di FAQ atau mulailah obrolan langsung dengan asisten AI kami di bawah ini.
+              Kami siap membantu Anda memahami cara menggunakan Pakra. Silakan cari jawaban di FAQ atau mulailah obrolan langsung dengan asisten AI kami di bawah ini.
             </p>
           </div>
 
@@ -123,7 +142,7 @@ const Page = () => {
             {/* Left Column: FAQ Accordion */}
             <section className="lg:col-span-4 flex flex-col gap-4">
               <h2 className="font-headline-md text-headline-md text-primary mb-2 flex items-center gap-2">
-                <HelpCircle size={24} className="text-secondary" />
+                <HelpCircle size={24} />
                 Pertanyaan Populer
               </h2>
                   <Accordion
@@ -133,7 +152,7 @@ const Page = () => {
                   >
                 {FAQ_LIST.map((faq, index) => (
                     <AccordionItem key={index} className='p-2.5 border hover:border-black transition-colors duration-300 ease-in-out rounded-md' value={faq.question}>
-                        <AccordionTrigger className='hover:no-underline'>{faq.question}</AccordionTrigger>
+                        <AccordionTrigger className='hover:no-underline font-semibold text-lg'>{faq.question}</AccordionTrigger>
                         <AccordionContent>{faq.answer}</AccordionContent>
                     </AccordionItem>
                 ))}
@@ -151,7 +170,7 @@ const Page = () => {
                   </div>
                   <div>
                     <h3 className="font-label-lg text-label-lg text-on-surface font-bold">
-                      Asisten PahamBirokrasi
+                      Asisten Pakra
                     </h3>
                     <p className="text-xs text-on-surface-variant flex items-center gap-1.5">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
@@ -171,7 +190,7 @@ const Page = () => {
               </div>
 
               {/* Chat Messages */}
-              <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-4 bg-surface-container-lowest">
+              <div ref={chatContainerRef} className="flex-1 p-6 overflow-y-auto  flex flex-col gap-4 bg-surface-container-lowest">
                 {messages.length === 0 ? (
                   /* Welcome Screen when Empty */
                   <div className="flex-1 flex flex-col items-center justify-center text-center max-w-lg mx-auto py-8">
@@ -179,7 +198,7 @@ const Page = () => {
                       <Bot size={36} />
                     </div>
                     <h4 className="font-headline-md text-headline-md text-on-surface mb-2">
-                      Halo! Saya Asisten PahamBirokrasi
+                      Halo! Saya Asisten Pakra
                     </h4>
                     <p className="font-body-md text-body-md text-on-surface-variant mb-6 leading-relaxed">
                       Saya dapat membantu menjelaskan langkah pengunggahan dokumen, pemecahan masalah error, atau privasi data Anda. Apa yang ingin Anda tanyakan?
@@ -191,7 +210,7 @@ const Page = () => {
                         <button
                           key={index}
                           onClick={() => handleSend(prompt)}
-                          className="p-3 text-left font-label-lg text-label-lg bg-surface-container hover:bg-secondary-container rounded-xl border border-surface-container hover:border-outline transition-all text-on-surface-variant hover:text-on-secondary-container cursor-pointer text-xs md:text-sm"
+                          className="p-3 text-left bg-surface-container hover:bg-secondary-container rounded-xl border border-surface-container hover:border-outline transition-all text-on-surface-variant hover:text-on-secondary-container cursor-pointer text-xs md:text-sm"
                         >
                           {prompt}
                         </button>

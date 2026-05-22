@@ -18,6 +18,7 @@ import {
   FileText
 } from "lucide-react";
 import { useLenis } from "@/hooks/useLenis";
+import { toast } from "sonner";
 
 type AppState = "idle" | "loading" | "result";
 
@@ -34,8 +35,8 @@ export default function Home() {
   useLenis()
 
   const resetState = useCallback(() => {
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (typeof window !== "undefined" && (window as any).responsiveVoice) {
+      (window as any).responsiveVoice.cancel();
     }
     setIsSpeaking(false);
 
@@ -54,8 +55,8 @@ export default function Home() {
 
     return () => {
       window.removeEventListener('pahamburo:navigate-home', resetState);
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+      if (typeof window !== "undefined" && (window as any).responsiveVoice) {
+        (window as any).responsiveVoice.cancel();
       }
     };
   }, [resetState]);
@@ -64,7 +65,9 @@ export default function Home() {
     if (!explanationData) return;
 
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      if ((window as any).responsiveVoice) {
+        (window as any).responsiveVoice.cancel();
+      }
       setIsSpeaking(false);
       return;
     }
@@ -75,15 +78,21 @@ export default function Home() {
       Poin penting yang perlu diperhatikan: ${explanationData.importantPoints.join(". ")}.
     `;
 
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.lang = "id-ID";
-    utterance.rate = 0.8
-    utterance.pitch = 0.9
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    setIsSpeaking(true);
-    window.speechSynthesis.speak(utterance);
+    if ((window as any).responsiveVoice) {
+      setIsSpeaking(true);
+      (window as any).responsiveVoice.speak(textToSpeak, "Indonesian Female", {
+        rate: 0.9,
+        pitch: 1,
+        onstart: () => setIsSpeaking(true),
+        onend: () => setIsSpeaking(false),
+        onerror: () => {
+          setIsSpeaking(false);
+          toast.error("Gagal memutar suara.");
+        }
+      });
+    } else {
+      toast.error("Layanan suara tidak tersedia saat ini.");
+    }
   };
 
   const handleUpload = async (file: File) => {
@@ -132,7 +141,7 @@ export default function Home() {
 
   return (
     <>
-      <Header />
+      <Header appState={appState} />
       <main className="pt-24 flex-1">
         <AnimatePresence mode="wait">
           {appState === "idle" && (
@@ -268,73 +277,90 @@ export default function Home() {
           )}
 
           {appState === "result" && (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8 flex flex-col md:flex-row gap-gutter"
-            >
-              {/* Left Side: Document Preview */}
-              <section className="w-full md:w-5/12">
-                <div className="bg-surface-container-lowest border border-surface-container rounded-xl overflow-hidden shadow-sm sticky top-[100px]">
-                  <div className="p-4 bg-surface-container-low border-b border-surface-container flex justify-between items-center">
-                    <h3 className="font-label-lg text-label-lg text-on-surface">
-                      Pratinjau Dokumen
-                    </h3>
-                    <div className="flex gap-2">
-                      <a
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 hover:bg-surface-container rounded transition-colors flex items-center justify-center"
-                        title="Perbesar dokumen"
-                      >
-                        <ZoomIn size={20} className="text-on-surface-variant" />
-                      </a>
-                      <a
-                        href={fileUrl}
-                        download={fileName}
-                        className="p-1.5 hover:bg-surface-container rounded transition-colors flex items-center justify-center"
-                        title="Unduh dokumen"
-                      >
-                        <Download size={20} className="text-on-surface-variant" />
-                      </a>
-                    </div>
-                  </div>
-                  <div className="aspect-[1/1.4] bg-surface-container-high relative flex items-center justify-center overflow-hidden">
-                    {fileType.startsWith("image/") ? (
-                      <img
-                        alt="Document Preview"
-                        className="w-full h-full object-contain p-2 bg-white"
-                        src={fileUrl}
-                      />
-                    ) : fileType === "application/pdf" ? (
-                      <iframe
-                        src={fileUrl}
-                        className="w-full h-full border-none"
-                        title="Document PDF Preview"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-surface-container-high p-8">
-                        <FileText size={64} className="text-secondary" />
-                        <span className="font-label-lg text-on-surface-variant text-center max-w-xs truncate">
-                          {fileName}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
 
-              {/* Right Side: Simplified Explanation */}
-              <section className="w-full md:w-7/12 flex flex-col gap-6">
-                <ExplanationCard
-                  data={explanationData}
-                  fileName={fileName}
-                  onReset={resetState}
-                />
-              </section>
-            </motion.div>
+<motion.div
+  key="result"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ duration: 0.35 }}
+  className="max-w-container-max-width mx-auto px-margin-mobile md:px-margin-desktop py-8"
+>
+  <div className="flex flex-col-reverse md:flex-row gap-gutter items-start">
+
+    {/* ── Left: Document Preview ── */}
+    <section className="w-full md:w-5/12 md:sticky md:top-[100px]">
+      <div className="bg-surface-container-lowest border border-surface-container rounded-xl overflow-hidden shadow-sm">
+
+        {/* Header bar */}
+        <div className="px-4 py-3 bg-surface-container-low border-b border-surface-container flex justify-between items-center">
+          <h3 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide">
+            Pratinjau Dokumen
+          </h3>
+          <div className="flex gap-1.5">
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-surface-container border border-transparent hover:border-surface-container-high transition-colors"
+              title="Perbesar dokumen"
+            >
+              <ZoomIn size={17} className="text-on-surface-variant" />
+            </a>
+            <a
+              href={fileUrl}
+              download={fileName}
+              className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-surface-container border border-transparent hover:border-surface-container-high transition-colors"
+              title="Unduh dokumen"
+            >
+              <Download size={17} className="text-on-surface-variant" />
+            </a>
+          </div>
+        </div>
+
+        {/* Preview area */}
+        <div className="aspect-[1/1.4] bg-surface-container-high relative overflow-hidden flex items-center justify-center">
+          {fileType.startsWith("image/") ? (
+            <img
+              alt="Pratinjau dokumen"
+              className="w-full h-full object-contain p-2 bg-white"
+              src={fileUrl}
+            />
+          ) : fileType === "application/pdf" ? (
+            <iframe
+              src={fileUrl}
+              className="w-full h-full border-none pointer-events-none"
+              title="Pratinjau PDF"
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-3 text-on-surface-variant p-8 text-center">
+              <FileText size={56} className="text-secondary/60" />
+              <span className="font-label-md text-label-md text-on-surface-variant max-w-[180px] wrap-break-words">
+                {fileName}
+              </span>
+            </div>
+          )}
+
+          {/* Filename badge overlay (image/pdf only) */}
+          {(fileType.startsWith("image/") || fileType === "application/pdf") && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-surface-container-lowest/90 backdrop-blur-sm border border-surface-container rounded-full px-3 py-1.5 text-label-xs text-on-surface-variant max-w-[85%] truncate">
+              {fileName}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+
+    {/* ── Right: Explanation Card ── */}
+    <section className="w-full md:w-7/12">
+      <ExplanationCard
+        data={explanationData}
+        fileName={fileName}
+        onReset={resetState}
+      />
+    </section>
+
+  </div>
+</motion.div>
           )}
         </AnimatePresence>
       </main>
@@ -345,7 +371,7 @@ export default function Home() {
         {appState === "result" && (
           <button
             onClick={handleToggleSpeech}
-            className="flex items-center gap-3 bg-primary text-on-primary px-8 h-[64px] rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+            className="flex items-center gap-3 bg-primary text-on-primary px-8 h-section-padding rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
           >
             {isSpeaking ? <VolumeX size={24} /> : <Volume2 size={24} />}
             <span className="font-label-lg text-label-lg font-bold">
