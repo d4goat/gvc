@@ -12,6 +12,8 @@ export const metadata: Metadata = {
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'})
 
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: Readonly<{
